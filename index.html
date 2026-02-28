@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SentinelX Pro</title>
+<title>SentinelX - Smart College Emergency</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
-html,body{
-    height:100%;
+body{
     margin:0;
     font-family:'Segoe UI',sans-serif;
     background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#1c1c1c);
@@ -32,11 +31,10 @@ html,body{
 
 .card{
     background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(12px);
+    backdrop-filter:blur(10px);
     padding:20px;
     border-radius:15px;
     margin-bottom:20px;
-    box-shadow:0 0 20px rgba(0,0,0,0.6);
 }
 
 input,select{
@@ -63,8 +61,7 @@ button:hover{
 }
 
 #map{
-    height:65vh;
-    min-height:300px;
+    height:60vh;
     width:100%;
     border-radius:15px;
     margin-top:10px;
@@ -78,13 +75,12 @@ button:hover{
     margin-top:10px;
 }
 
-.low{ background:green; }
-.medium{ background:orange; }
-.high{ background:red; }
+.low{background:green;}
+.medium{background:orange;}
+.high{background:red;}
 
 #countdownBox{
     margin-top:10px;
-    font-size:18px;
     font-weight:bold;
 }
 </style>
@@ -94,15 +90,14 @@ button:hover{
 
 <div class="container">
 
-<h2>🚨 SentinelX Pro - Live Tracking</h2>
+<h2>🏫 SentinelX - Smart College Emergency</h2>
 
 <div class="card">
-
 <h3>Student Registration</h3>
 
-<input id="name" placeholder="Name" required>
+<input id="name" placeholder="Name">
 
-<select id="blood" required>
+<select id="blood">
 <option value="">Blood Group</option>
 <option>A+</option><option>A-</option>
 <option>B+</option><option>B-</option>
@@ -110,32 +105,47 @@ button:hover{
 <option>O+</option><option>O-</option>
 </select>
 
-<input id="contact1" type="tel"
-       placeholder="Contact 1 (10 digits)"
-       maxlength="10"
-       pattern="[0-9]{10}"
-       required>
+<h3>Campus Location</h3>
 
-<input id="contact2" type="tel"
-       placeholder="Contact 2 (10 digits)"
-       maxlength="10"
-       pattern="[0-9]{10}">
+<select id="building">
+<option value="">Select Building</option>
+<option>Main Block</option>
+<option>Lab Block</option>
+<option>Library Block</option>
+</select>
+
+<select id="floor">
+<option value="">Select Floor</option>
+<option>Ground Floor</option>
+<option>1st Floor</option>
+<option>2nd Floor</option>
+<option>3rd Floor</option>
+</select>
+
+<input id="room" placeholder="Room Number">
+
+<h3>Emergency Contacts</h3>
+
+<input id="contact1" type="tel" maxlength="10"
+placeholder="Contact 1 (10 digits)">
+<input id="contact2" type="tel" maxlength="10"
+placeholder="Contact 2 (10 digits)">
 
 <button onclick="register()">Register</button>
 <button onclick="startTracking()">Start Live Tracking</button>
 
-<h3>🚨 Simulate Emergency</h3>
+<h3>Simulate Emergency</h3>
 
-<button onclick="startEmergency('LOW')">Low Emergency</button>
-<button onclick="startEmergency('MEDIUM')">Medium Emergency</button>
-<button onclick="startEmergency('HIGH')">High Emergency</button>
+<button onclick="startEmergency('LOW')">Low</button>
+<button onclick="startEmergency('MEDIUM')">Medium</button>
+<button onclick="startEmergency('HIGH')">High</button>
 
 <div id="countdownBox"></div>
 
 </div>
 
 <div class="card">
-<h3>📡 Live Campus Monitoring</h3>
+<h3>Live Campus Monitoring</h3>
 <div id="map"></div>
 <div id="severityDisplay"></div>
 </div>
@@ -149,158 +159,143 @@ let marker;
 let currentSeverity="LOW";
 let countdownInterval;
 
-// Registration
 function register(){
 
-    const name = document.getElementById("name").value.trim();
-    const blood = document.getElementById("blood").value;
-    const contact1 = document.getElementById("contact1").value.trim();
-    const contact2 = document.getElementById("contact2").value.trim();
+const name=document.getElementById("name").value.trim();
+const blood=document.getElementById("blood").value;
+const building=document.getElementById("building").value;
+const floor=document.getElementById("floor").value;
+const room=document.getElementById("room").value.trim();
+const contact1=document.getElementById("contact1").value.trim();
+const contact2=document.getElementById("contact2").value.trim();
 
-    const phoneRegex = /^[0-9]{10}$/;
+const phoneRegex=/^[0-9]{10}$/;
 
-    if(!name || !blood){
-        alert("Please fill required fields");
-        return;
-    }
-
-    if(!phoneRegex.test(contact1)){
-        alert("Contact 1 must be exactly 10 digits");
-        return;
-    }
-
-    if(contact2 && !phoneRegex.test(contact2)){
-        alert("Contact 2 must be exactly 10 digits");
-        return;
-    }
-
-    const user = {
-        name: name,
-        blood: blood,
-        contacts: [contact1, contact2].filter(Boolean)
-    };
-
-    localStorage.setItem("sentinelUser", JSON.stringify(user));
-    alert("Registered Successfully ✅");
+if(!name||!blood||!building||!floor){
+alert("Fill all required fields");
+return;
 }
 
-// Initialize Map
+if(!phoneRegex.test(contact1)){
+alert("Contact 1 must be exactly 10 digits");
+return;
+}
+
+if(contact2 && !phoneRegex.test(contact2)){
+alert("Contact 2 must be exactly 10 digits");
+return;
+}
+
+const user={
+name,blood,building,floor,room,
+contacts:[contact1,contact2].filter(Boolean)
+};
+
+localStorage.setItem("sentinelUser",JSON.stringify(user));
+alert("Registered Successfully");
+}
+
 function initMap(lat,lon){
 
-    map = L.map('map').setView([lat,lon],16);
+map=L.map('map').setView([lat,lon],16);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        attribution:'© OpenStreetMap'
-    }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
 
-    marker = L.marker([lat,lon]).addTo(map)
-        .bindPopup("Live Location")
-        .openPopup();
+marker=L.marker([lat,lon]).addTo(map);
 
-    setTimeout(()=>{
-        map.invalidateSize();
-    },800);
+setTimeout(()=>{map.invalidateSize();},800);
 }
 
-// Live Tracking
 function startTracking(){
 
-    if(!navigator.geolocation){
-        alert("Geolocation not supported");
-        return;
-    }
-
-    navigator.geolocation.watchPosition(
-        pos=>{
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-
-            if(!map){
-                initMap(lat,lon);
-            }else{
-                marker.setLatLng([lat,lon]);
-                map.setView([lat,lon]);
-            }
-        },
-        err=>{
-            alert("Location Error: " + err.message);
-        },
-        {
-            enableHighAccuracy:true,
-            timeout:15000,
-            maximumAge:0
-        }
-    );
+if(!navigator.geolocation){
+alert("Geolocation not supported");
+return;
 }
 
-// Emergency with 10 sec timer
+navigator.geolocation.watchPosition(
+pos=>{
+const lat=pos.coords.latitude;
+const lon=pos.coords.longitude;
+
+if(!map){
+initMap(lat,lon);
+}else{
+marker.setLatLng([lat,lon]);
+map.setView([lat,lon]);
+}
+},
+err=>{alert("Location Error: "+err.message);},
+{enableHighAccuracy:true}
+);
+}
+
 function startEmergency(level){
 
-    currentSeverity = level;
+currentSeverity=level;
 
-    if(!marker){
-        alert("Start Live Tracking first");
-        return;
-    }
+if(!marker){
+alert("Start Live Tracking first");
+return;
+}
 
-    let seconds=10;
+let seconds=10;
 
-    document.getElementById("countdownBox").innerHTML=
-        `⚠ Sending ${level} alert in 10 seconds...<br>
-        <button onclick="cancelEmergency()">Cancel</button>`;
+document.getElementById("countdownBox").innerHTML=
+`Sending ${level} alert in 10 seconds...
+<br><button onclick="cancelEmergency()">Cancel</button>`;
 
-    countdownInterval=setInterval(()=>{
-        seconds--;
+countdownInterval=setInterval(()=>{
+seconds--;
 
-        document.getElementById("countdownBox").innerHTML=
-        `⚠ Sending ${level} alert in ${seconds} seconds...<br>
-        <button onclick="cancelEmergency()">Cancel</button>`;
+document.getElementById("countdownBox").innerHTML=
+`Sending ${level} alert in ${seconds} seconds...
+<br><button onclick="cancelEmergency()">Cancel</button>`;
 
-        if(seconds<=0){
-            clearInterval(countdownInterval);
-            document.getElementById("countdownBox").innerHTML="";
-            sendSMS();
-        }
-    },1000);
+if(seconds<=0){
+clearInterval(countdownInterval);
+document.getElementById("countdownBox").innerHTML="";
+sendSMS();
+}
+},1000);
 }
 
 function cancelEmergency(){
-    clearInterval(countdownInterval);
-    document.getElementById("countdownBox").innerHTML="❌ Emergency Cancelled";
+clearInterval(countdownInterval);
+document.getElementById("countdownBox").innerHTML="Emergency Cancelled";
 }
 
-// Send SMS
 function sendSMS(){
 
-    const data = JSON.parse(localStorage.getItem("sentinelUser"));
-    if(!data){
-        alert("Please register first");
-        return;
-    }
+const data=JSON.parse(localStorage.getItem("sentinelUser"));
+if(!data){alert("Register first");return;}
 
-    const lat = marker.getLatLng().lat;
-    const lon = marker.getLatLng().lng;
+const lat=marker.getLatLng().lat;
+const lon=marker.getLatLng().lng;
 
-    const message =
+const message=
 `🚨 SentinelX EMERGENCY 🚨
 Name: ${data.name}
 Blood Group: ${data.blood}
+Building: ${data.building}
+Floor: ${data.floor}
+Room: ${data.room}
 Severity: ${currentSeverity}
 Location: https://maps.google.com/?q=${lat},${lon}`;
 
-    const numbers = data.contacts.join(",");
+const numbers=data.contacts.join(",");
 
-    window.location.href =
-        `sms:${numbers}?body=${encodeURIComponent(message)}`;
+window.location.href=
+`sms:${numbers}?body=${encodeURIComponent(message)}`;
 
-    document.getElementById("severityDisplay").innerHTML=`
-        <h3>🚨 Emergency Status</h3>
-        <span class="badge ${currentSeverity.toLowerCase()}">
-        ${currentSeverity} SEVERITY
-        </span>`;
+document.getElementById("severityDisplay").innerHTML=
+`<span class="badge ${currentSeverity.toLowerCase()}">
+${currentSeverity} SEVERITY
+</span>`;
 }
 
 </script>
-
 </body>
 </html>
