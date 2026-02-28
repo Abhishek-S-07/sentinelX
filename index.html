@@ -4,19 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Prevent Cache -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
 <title>SentinelX Pro</title>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
-html, body {
+html,body{
     height:100%;
     margin:0;
     font-family:'Segoe UI',sans-serif;
@@ -46,7 +40,7 @@ html, body {
     box-shadow:0 0 20px rgba(0,0,0,0.6);
 }
 
-input, select{
+input,select{
     width:100%;
     padding:10px;
     margin:8px 0;
@@ -70,8 +64,10 @@ button:hover{
 }
 
 #map{
-    height:60vh;   /* MOBILE FIX */
+    height:65vh;
+    min-height:300px;
     width:100%;
+    display:block;
     border-radius:15px;
     margin-top:10px;
 }
@@ -79,7 +75,6 @@ button:hover{
 .badge{
     padding:8px 15px;
     border-radius:20px;
-    font-size:14px;
     font-weight:bold;
     display:inline-block;
     margin-top:10px;
@@ -147,7 +142,7 @@ let marker;
 let currentSeverity="LOW";
 let countdownInterval;
 
-// Register
+// Register user
 function register(){
     const user={
         name:document.getElementById("name").value,
@@ -180,13 +175,12 @@ function initMap(lat,lon){
         .bindPopup("Live Location")
         .openPopup();
 
-    // MOBILE RENDER FIX
     setTimeout(()=>{
         map.invalidateSize();
-    },500);
+    },800);
 }
 
-// Live Tracking
+// Start Live Tracking
 function startTracking(){
 
     if(!navigator.geolocation){
@@ -217,7 +211,7 @@ function startTracking(){
     );
 }
 
-// Emergency
+// Emergency with 10s cancel
 function startEmergency(level){
 
     currentSeverity = level;
@@ -253,6 +247,7 @@ function cancelEmergency(){
     document.getElementById("countdownBox").innerHTML="❌ Emergency Cancelled";
 }
 
+// Send SMS
 function sendSMS(){
 
     const data = JSON.parse(localStorage.getItem("sentinelUser"));
