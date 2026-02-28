@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Prevent Cache -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>SentinelX Pro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet Map -->
+<title>SentinelX Pro</title>
+
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
-body{
+html, body {
+    height:100%;
     margin:0;
     font-family:'Segoe UI',sans-serif;
     background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#1c1c1c);
@@ -58,16 +63,15 @@ button{
     color:white;
     font-weight:bold;
     cursor:pointer;
-    transition:0.3s;
 }
 
 button:hover{
-    transform:scale(1.05);
     background:#ff1744;
 }
 
 #map{
-    height:400px;
+    height:60vh;   /* MOBILE FIX */
+    width:100%;
     border-radius:15px;
     margin-top:10px;
 }
@@ -100,6 +104,7 @@ button:hover{
 <h2>🚨 SentinelX Pro - Live Tracking</h2>
 
 <div class="card">
+
 <h3>Student Registration</h3>
 
 <input id="name" placeholder="Name">
@@ -118,6 +123,7 @@ button:hover{
 <button onclick="startTracking()">Start Live Tracking</button>
 
 <h3>🚨 Simulate Emergency</h3>
+
 <button onclick="startEmergency('LOW')">Low Emergency</button>
 <button onclick="startEmergency('MEDIUM')">Medium Emergency</button>
 <button onclick="startEmergency('HIGH')">High Emergency</button>
@@ -138,11 +144,10 @@ button:hover{
 
 let map;
 let marker;
-let watchId;
 let currentSeverity="LOW";
 let countdownInterval;
 
-// Register User
+// Register
 function register(){
     const user={
         name:document.getElementById("name").value,
@@ -164,15 +169,21 @@ function register(){
 
 // Initialize Map
 function initMap(lat,lon){
-    map=L.map('map').setView([lat,lon],16);
+
+    map = L.map('map').setView([lat,lon],16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         attribution:'© OpenStreetMap'
     }).addTo(map);
 
-    marker=L.marker([lat,lon]).addTo(map)
+    marker = L.marker([lat,lon]).addTo(map)
         .bindPopup("Live Location")
         .openPopup();
+
+    // MOBILE RENDER FIX
+    setTimeout(()=>{
+        map.invalidateSize();
+    },500);
 }
 
 // Live Tracking
@@ -183,24 +194,30 @@ function startTracking(){
         return;
     }
 
-    watchId=navigator.geolocation.watchPosition(pos=>{
+    navigator.geolocation.watchPosition(
+        pos=>{
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
 
-        const lat=pos.coords.latitude;
-        const lon=pos.coords.longitude;
-
-        if(!map){
-            initMap(lat,lon);
-        }else{
-            marker.setLatLng([lat,lon]);
-            map.setView([lat,lon]);
+            if(!map){
+                initMap(lat,lon);
+            }else{
+                marker.setLatLng([lat,lon]);
+                map.setView([lat,lon]);
+            }
+        },
+        err=>{
+            alert("Location Error: " + err.message);
+        },
+        {
+            enableHighAccuracy:true,
+            timeout:15000,
+            maximumAge:0
         }
-
-    },{
-        enableHighAccuracy:true
-    });
+    );
 }
 
-// Start Emergency with 10s Cancel
+// Emergency
 function startEmergency(level){
 
     currentSeverity = level;
@@ -210,34 +227,32 @@ function startEmergency(level){
         return;
     }
 
-    let seconds = 10;
-    document.getElementById("countdownBox").innerHTML =
-        `⚠ Sending ${level} alert in 10 seconds... 
-        <br><button onclick="cancelEmergency()">Cancel</button>`;
+    let seconds=10;
 
-    countdownInterval = setInterval(()=>{
+    document.getElementById("countdownBox").innerHTML=
+        `⚠ Sending ${level} alert in 10 seconds...<br>
+        <button onclick="cancelEmergency()">Cancel</button>`;
+
+    countdownInterval=setInterval(()=>{
         seconds--;
 
-        document.getElementById("countdownBox").innerHTML =
-        `⚠ Sending ${level} alert in ${seconds} seconds...
-        <br><button onclick="cancelEmergency()">Cancel</button>`;
+        document.getElementById("countdownBox").innerHTML=
+        `⚠ Sending ${level} alert in ${seconds} seconds...<br>
+        <button onclick="cancelEmergency()">Cancel</button>`;
 
         if(seconds<=0){
             clearInterval(countdownInterval);
             document.getElementById("countdownBox").innerHTML="";
             sendSMS();
         }
-
     },1000);
 }
 
-// Cancel Timer
 function cancelEmergency(){
     clearInterval(countdownInterval);
     document.getElementById("countdownBox").innerHTML="❌ Emergency Cancelled";
 }
 
-// Send SMS Automatically
 function sendSMS(){
 
     const data = JSON.parse(localStorage.getItem("sentinelUser"));
@@ -261,16 +276,14 @@ Location: https://maps.google.com/?q=${lat},${lon}`;
     window.location.href =
         `sms:${numbers}?body=${encodeURIComponent(message)}`;
 
-    document.getElementById("severityDisplay").innerHTML = `
+    document.getElementById("severityDisplay").innerHTML=`
         <h3>🚨 Emergency Status</h3>
         <span class="badge ${currentSeverity.toLowerCase()}">
         ${currentSeverity} SEVERITY
-        </span>
-    `;
+        </span>`;
 }
 
 </script>
 
 </body>
 </html>
-
