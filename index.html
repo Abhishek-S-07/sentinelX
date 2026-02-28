@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>SentinelX Pro</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -67,7 +66,6 @@ button:hover{
     height:65vh;
     min-height:300px;
     width:100%;
-    display:block;
     border-radius:15px;
     margin-top:10px;
 }
@@ -102,8 +100,9 @@ button:hover{
 
 <h3>Student Registration</h3>
 
-<input id="name" placeholder="Name">
-<select id="blood">
+<input id="name" placeholder="Name" required>
+
+<select id="blood" required>
 <option value="">Blood Group</option>
 <option>A+</option><option>A-</option>
 <option>B+</option><option>B-</option>
@@ -111,8 +110,16 @@ button:hover{
 <option>O+</option><option>O-</option>
 </select>
 
-<input id="contact1" placeholder="Contact 1">
-<input id="contact2" placeholder="Contact 2">
+<input id="contact1" type="tel"
+       placeholder="Contact 1 (10 digits)"
+       maxlength="10"
+       pattern="[0-9]{10}"
+       required>
+
+<input id="contact2" type="tel"
+       placeholder="Contact 2 (10 digits)"
+       maxlength="10"
+       pattern="[0-9]{10}">
 
 <button onclick="register()">Register</button>
 <button onclick="startTracking()">Start Live Tracking</button>
@@ -142,24 +149,39 @@ let marker;
 let currentSeverity="LOW";
 let countdownInterval;
 
-// Register user
+// Registration
 function register(){
-    const user={
-        name:document.getElementById("name").value,
-        blood:document.getElementById("blood").value,
-        contacts:[
-            document.getElementById("contact1").value,
-            document.getElementById("contact2").value
-        ].filter(Boolean)
-    };
 
-    if(!user.name || !user.blood){
+    const name = document.getElementById("name").value.trim();
+    const blood = document.getElementById("blood").value;
+    const contact1 = document.getElementById("contact1").value.trim();
+    const contact2 = document.getElementById("contact2").value.trim();
+
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if(!name || !blood){
         alert("Please fill required fields");
         return;
     }
 
-    localStorage.setItem("sentinelUser",JSON.stringify(user));
-    alert("Registered Successfully");
+    if(!phoneRegex.test(contact1)){
+        alert("Contact 1 must be exactly 10 digits");
+        return;
+    }
+
+    if(contact2 && !phoneRegex.test(contact2)){
+        alert("Contact 2 must be exactly 10 digits");
+        return;
+    }
+
+    const user = {
+        name: name,
+        blood: blood,
+        contacts: [contact1, contact2].filter(Boolean)
+    };
+
+    localStorage.setItem("sentinelUser", JSON.stringify(user));
+    alert("Registered Successfully ✅");
 }
 
 // Initialize Map
@@ -180,7 +202,7 @@ function initMap(lat,lon){
     },800);
 }
 
-// Start Live Tracking
+// Live Tracking
 function startTracking(){
 
     if(!navigator.geolocation){
@@ -211,7 +233,7 @@ function startTracking(){
     );
 }
 
-// Emergency with 10s cancel
+// Emergency with 10 sec timer
 function startEmergency(level){
 
     currentSeverity = level;
@@ -282,4 +304,3 @@ Location: https://maps.google.com/?q=${lat},${lon}`;
 
 </body>
 </html>
-
