@@ -10,28 +10,39 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body{font-family:Arial;background:#0f2027;color:white;text-align:center;padding:20px;}
-input,select{padding:10px;margin:8px;width:80%;border-radius:8px;border:none;}
-button{padding:10px;background:crimson;color:white;border:none;border-radius:8px;cursor:pointer;}
-button:hover{background:#ff1744;}
+body{
+  font-family:Arial;
+  background:#0f2027;
+  color:white;
+  text-align:center;
+  padding:20px;
+}
+input{
+  padding:10px;
+  margin:8px;
+  width:80%;
+  border-radius:8px;
+  border:none;
+}
+button{
+  padding:10px 15px;
+  margin:6px;
+  background:crimson;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+button:hover{
+  background:#ff1744;
+}
 </style>
 </head>
 <body>
 
-<h2>🏫 SentinelX Student App</h2>
+<h2>🏫 SentinelX Student</h2>
 
 <input id="name" placeholder="Name">
-<select id="building">
-<option>Main Block</option>
-<option>Lab Block</option>
-<option>Library</option>
-</select>
-<select id="floor">
-<option>Ground</option>
-<option>1st</option>
-<option>2nd</option>
-</select>
-<input id="room" placeholder="Room No">
 <input id="contact" placeholder="Emergency Contact (10 digits)" maxlength="10">
 
 <br>
@@ -41,7 +52,7 @@ button:hover{background:#ff1744;}
 
 <script>
 
-// 🔥 YOUR FIREBASE CONFIG (Converted to v8)
+// 🔥 Firebase Config (v8 format)
 const firebaseConfig = {
   apiKey: "AIzaSyBz80olPhD8ZUlaCSaXmojuseANyzuUOj8",
   authDomain: "sentinelx-blaze.firebaseapp.com",
@@ -49,90 +60,80 @@ const firebaseConfig = {
   projectId: "sentinelx-blaze",
   storageBucket: "sentinelx-blaze.firebasestorage.app",
   messagingSenderId: "601578359867",
-  appId: "1:601578359867:web:832a82427f67cb4468e01e",
-  measurementId: "G-ZQF87RGSJ7"
+  appId: "1:601578359867:web:832a82427f67cb4468e01e"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let currentUserID = null;
+let userId = null;
 
 // REGISTER
-function register(){
+function register() {
 
-const phoneRegex=/^[0-9]{10}$/;
+  const phoneRegex = /^[0-9]{10}$/;
+  if (!phoneRegex.test(contact.value)) {
+    alert("Enter valid 10 digit number");
+    return;
+  }
 
-if(!phoneRegex.test(contact.value)){
-alert("Enter valid 10 digit number");
-return;
-}
+  userId = Date.now();
 
-currentUserID = Date.now();
+  db.ref("users/" + userId).set({
+    name: name.value,
+    contact: contact.value,
+    status: "ACTIVE",
+    live: "OFF"
+  });
 
-db.ref("users/" + currentUserID).set({
-name: name.value,
-building: building.value,
-floor: floor.value,
-room: room.value,
-contact: contact.value,
-status: "ACTIVE",
-live: "OFF"
-});
-
-alert("Registered Successfully");
+  alert("Registered Successfully");
 }
 
 // LIVE TRACKING
-function startTracking(){
+function startTracking() {
 
-if(!currentUserID){
-alert("Register first");
-return;
+  if (!userId) {
+    alert("Register first");
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    function(position) {
+
+      db.ref("users/" + userId).update({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        live: "ON"
+      });
+
+    },
+    function(error) {
+      alert("Location Error: " + error.message);
+    },
+    { enableHighAccuracy: true }
+  );
 }
 
-navigator.geolocation.watchPosition(position => {
+// EMERGENCY
+function triggerAlert() {
 
-const lat = position.coords.latitude;
-const lon = position.coords.longitude;
+  if (!userId) {
+    alert("Register first");
+    return;
+  }
 
-db.ref("users/" + currentUserID).update({
-latitude: lat,
-longitude: lon,
-live: "ON"
-});
+  db.ref("alerts/" + Date.now()).set({
+    user: userId,
+    severity: "HIGH",
+    time: new Date().toLocaleString()
+  });
 
-});
+  db.ref("users/" + userId).update({
+    status: "EMERGENCY"
+  });
+
+  alert("Emergency Sent to Admin");
 }
-
-// TRIGGER ALERT
-function triggerAlert(){
-
-if(!currentUserID){
-alert("Register first");
-return;
-}
-
-db.ref("alerts/" + Date.now()).set({
-userID: currentUserID,
-severity: "HIGH",
-time: new Date().toLocaleString()
-});
-
-db.ref("users/" + currentUserID).update({
-status: "EMERGENCY"
-});
-
-alert("Emergency Sent to Admin");
-}
-
-window.onbeforeunload = function(){
-if(currentUserID){
-db.ref("users/" + currentUserID).update({
-live: "OFF"
-});
-}
-};
 
 </script>
 </body>
