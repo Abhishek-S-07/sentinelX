@@ -1,31 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>SentinelX Admin</title>
+<title>SentinelX Admin Dashboard</title>
 <style>
-body{
-background:#111;
-color:white;
-font-family:Arial;
-padding:20px;
-}
-table{
-width:100%;
-border-collapse:collapse;
-}
-th,td{
-border:1px solid gray;
-padding:10px;
-text-align:center;
-}
-th{
-background:crimson;
-}
+body{background:#111;color:white;font-family:Arial;padding:20px;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid gray;padding:10px;text-align:center;}
+th{background:crimson;}
 </style>
 </head>
 <body>
 
-<h2>SentinelX Campus Control Room</h2>
+<h2>🏫 SentinelX Campus Control Room</h2>
 
 <table>
 <tr>
@@ -33,21 +19,32 @@ background:crimson;
 <th>Building</th>
 <th>Floor</th>
 <th>Room</th>
+<th>Severity</th>
+<th>Time</th>
 </tr>
-<tbody id="table"></tbody>
+<tbody id="logs"></tbody>
 </table>
 
 <script>
-const data=JSON.parse(localStorage.getItem("sentinelUser"));
-if(data){
-document.getElementById("table").innerHTML=
-`<tr>
-<td>${data.name}</td>
-<td>${data.building}</td>
-<td>${data.floor}</td>
-<td>${data.room}</td>
+
+const logs=JSON.parse(localStorage.getItem("sentinelLogs"))||[];
+
+let html="";
+
+logs.forEach(l=>{
+html+=`
+<tr>
+<td>${l.name}</td>
+<td>${l.building}</td>
+<td>${l.floor}</td>
+<td>${l.room}</td>
+<td>${l.severity}</td>
+<td>${l.time}</td>
 </tr>`;
-}
+});
+
+document.getElementById("logs").innerHTML=html;
+
 </script>
 
 </body>
