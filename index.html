@@ -3,297 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SentinelX - Smart College Emergency</title>
+<title>SentinelX Smart College Emergency</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
 body{
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#1c1c1c);
-    background-size:400% 400%;
-    animation: gradient 10s ease infinite;
-    color:white;
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#000);
+background-size:400% 400%;
+animation:gradient 10s ease infinite;
+color:white;
 }
 @keyframes gradient{
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
 }
-
-.container{
-    max-width:1000px;
-    margin:auto;
-    padding:20px;
-}
-
+.container{max-width:1000px;margin:auto;padding:20px;}
 .card{
-    background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(10px);
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
+background:rgba(255,255,255,0.08);
+padding:20px;
+border-radius:15px;
+margin-bottom:20px;
 }
-
 input,select{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-    border:none;
-    border-radius:8px;
+width:100%;padding:10px;margin:8px 0;border:none;border-radius:8px;
 }
-
 button{
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    margin:6px 0;
-    background:crimson;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
+padding:12px;border:none;border-radius:8px;
+margin:6px 0;background:crimson;color:white;font-weight:bold;cursor:pointer;
 }
-
-button:hover{
-    background:#ff1744;
-}
-
-#map{
-    height:60vh;
-    width:100%;
-    border-radius:15px;
-    margin-top:10px;
-}
-
-.badge{
-    padding:8px 15px;
-    border-radius:20px;
-    font-weight:bold;
-    display:inline-block;
-    margin-top:10px;
-}
-
+button:hover{background:#ff1744;}
+#map{height:60vh;border-radius:15px;margin-top:10px;}
+.badge{padding:8px 15px;border-radius:20px;font-weight:bold;}
 .low{background:green;}
 .medium{background:orange;}
 .high{background:red;}
-
-#countdownBox{
-    margin-top:10px;
-    font-weight:bold;
-}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-<h2>🏫 SentinelX - Smart College Emergency</h2>
+<h2>🏫 SentinelX – Smart College Emergency</h2>
 
 <div class="card">
+
 <h3>Student Registration</h3>
 
 <input id="name" placeholder="Name">
-
 <select id="blood">
 <option value="">Blood Group</option>
-<option>A+</option><option>A-</option>
-<option>B+</option><option>B-</option>
-<option>AB+</option><option>AB-</option>
-<option>O+</option><option>O-</option>
+<option>A+</option><option>B+</option>
+<option>O+</option><option>AB+</option>
 </select>
 
-<h3>Campus Location</h3>
-
 <select id="building">
-<option value="">Select Building</option>
+<option value="">Building</option>
 <option>Main Block</option>
 <option>Lab Block</option>
-<option>Library Block</option>
+<option>Library</option>
 </select>
 
 <select id="floor">
-<option value="">Select Floor</option>
-<option>Ground Floor</option>
-<option>1st Floor</option>
-<option>2nd Floor</option>
-<option>3rd Floor</option>
+<option value="">Floor</option>
+<option>Ground</option>
+<option>1st</option>
+<option>2nd</option>
 </select>
 
-<input id="room" placeholder="Room Number">
-
-<h3>Emergency Contacts</h3>
-
-<input id="contact1" type="tel" maxlength="10"
-placeholder="Contact 1 (10 digits)">
-<input id="contact2" type="tel" maxlength="10"
-placeholder="Contact 2 (10 digits)">
+<input id="room" placeholder="Room No">
+<input id="contact1" placeholder="Contact 1 (10 digits)" maxlength="10">
+<input id="contact2" placeholder="Contact 2 (10 digits)" maxlength="10">
 
 <button onclick="register()">Register</button>
 <button onclick="startTracking()">Start Live Tracking</button>
+<button onclick="enableMotion()">Enable Smart Detection</button>
+<button onclick="simulateImpact()">Simulate Impact (Demo)</button>
 
-<h3>Simulate Emergency</h3>
-
-<button onclick="startEmergency('LOW')">Low</button>
-<button onclick="startEmergency('MEDIUM')">Medium</button>
-<button onclick="startEmergency('HIGH')">High</button>
-
-<div id="countdownBox"></div>
+<div id="countdown"></div>
+<div id="severityBox"></div>
 
 </div>
 
 <div class="card">
-<h3>Live Campus Monitoring</h3>
+<h3>📡 Live Campus Monitoring</h3>
 <div id="map"></div>
-<div id="severityDisplay"></div>
 </div>
 
 </div>
 
 <script>
 
-let map;
-let marker;
-let currentSeverity="LOW";
-let countdownInterval;
+let map, marker;
+let severity="LOW";
+let timer;
 
+// ===== REGISTER =====
 function register(){
-
-const name=document.getElementById("name").value.trim();
-const blood=document.getElementById("blood").value;
-const building=document.getElementById("building").value;
-const floor=document.getElementById("floor").value;
-const room=document.getElementById("room").value.trim();
-const contact1=document.getElementById("contact1").value.trim();
-const contact2=document.getElementById("contact2").value.trim();
 
 const phoneRegex=/^[0-9]{10}$/;
 
-if(!name||!blood||!building||!floor){
-alert("Fill all required fields");
-return;
-}
-
-if(!phoneRegex.test(contact1)){
-alert("Contact 1 must be exactly 10 digits");
-return;
-}
-
-if(contact2 && !phoneRegex.test(contact2)){
-alert("Contact 2 must be exactly 10 digits");
-return;
-}
-
 const user={
-name,blood,building,floor,room,
-contacts:[contact1,contact2].filter(Boolean)
+name:name.value,
+blood:blood.value,
+building:building.value,
+floor:floor.value,
+room:room.value,
+contacts:[contact1.value,contact2.value].filter(Boolean)
 };
 
+if(!phoneRegex.test(contact1.value)){
+alert("Contact must be 10 digits"); return;
+}
+
 localStorage.setItem("sentinelUser",JSON.stringify(user));
-alert("Registered Successfully");
+alert("Registered");
 }
 
-function initMap(lat,lon){
-
-map=L.map('map').setView([lat,lon],16);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-attribution:'© OpenStreetMap'
-}).addTo(map);
-
-marker=L.marker([lat,lon]).addTo(map);
-
-setTimeout(()=>{map.invalidateSize();},800);
-}
-
+// ===== GPS =====
 function startTracking(){
-
-if(!navigator.geolocation){
-alert("Geolocation not supported");
-return;
-}
-
-navigator.geolocation.watchPosition(
-pos=>{
+navigator.geolocation.watchPosition(pos=>{
 const lat=pos.coords.latitude;
 const lon=pos.coords.longitude;
 
 if(!map){
-initMap(lat,lon);
+map=L.map('map').setView([lat,lon],16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+marker=L.marker([lat,lon]).addTo(map);
 }else{
 marker.setLatLng([lat,lon]);
 map.setView([lat,lon]);
 }
-},
-err=>{alert("Location Error: "+err.message);},
-{enableHighAccuracy:true}
-);
+});
 }
 
-function startEmergency(level){
+// ===== MOTION DETECTION =====
+function enableMotion(){
 
-currentSeverity=level;
-
-if(!marker){
-alert("Start Live Tracking first");
-return;
+if(typeof DeviceMotionEvent.requestPermission==="function"){
+DeviceMotionEvent.requestPermission().then(p=>{
+if(p==="granted"){
+window.addEventListener("devicemotion",motionHandler);
+}
+});
+}else{
+window.addEventListener("devicemotion",motionHandler);
+}
 }
 
-let seconds=10;
+function motionHandler(e){
 
-document.getElementById("countdownBox").innerHTML=
-`Sending ${level} alert in 10 seconds...
-<br><button onclick="cancelEmergency()">Cancel</button>`;
+const acc=e.accelerationIncludingGravity;
+if(!acc) return;
 
-countdownInterval=setInterval(()=>{
-seconds--;
+const total=Math.abs(acc.x)+Math.abs(acc.y)+Math.abs(acc.z);
 
-document.getElementById("countdownBox").innerHTML=
-`Sending ${level} alert in ${seconds} seconds...
-<br><button onclick="cancelEmergency()">Cancel</button>`;
+if(total>45){ trigger("HIGH"); }
+else if(total>30){ trigger("MEDIUM"); }
+else if(total>20){ trigger("LOW"); }
+}
 
-if(seconds<=0){
-clearInterval(countdownInterval);
-document.getElementById("countdownBox").innerHTML="";
-sendSMS();
+// ===== DEMO BUTTON =====
+function simulateImpact(){
+trigger("HIGH");
+}
+
+// ===== TRIGGER FLOW =====
+function trigger(level){
+
+severity=level;
+
+logEvent(level);
+
+let sec=10;
+
+countdown.innerHTML=
+`Impact Detected (${level}) - Sending SOS in 10s
+<br><button onclick="cancel()">Cancel</button>`;
+
+timer=setInterval(()=>{
+sec--;
+countdown.innerHTML=
+`Sending in ${sec}s
+<br><button onclick="cancel()">Cancel</button>`;
+if(sec<=0){
+clearInterval(timer);
+sendSOS();
 }
 },1000);
+
+severityBox.innerHTML=
+`<span class="badge ${level.toLowerCase()}">${level} SEVERITY</span>`;
 }
 
-function cancelEmergency(){
-clearInterval(countdownInterval);
-document.getElementById("countdownBox").innerHTML="Emergency Cancelled";
+// ===== CANCEL =====
+function cancel(){
+clearInterval(timer);
+countdown.innerHTML="Emergency Cancelled";
 }
 
-function sendSMS(){
+// ===== SEND SMS =====
+function sendSOS(){
 
 const data=JSON.parse(localStorage.getItem("sentinelUser"));
-if(!data){alert("Register first");return;}
+if(!data||!marker) return;
 
 const lat=marker.getLatLng().lat;
 const lon=marker.getLatLng().lng;
 
-const message=
-`🚨 SentinelX EMERGENCY 🚨
-Name: ${data.name}
-Blood Group: ${data.blood}
-Building: ${data.building}
-Floor: ${data.floor}
-Room: ${data.room}
-Severity: ${currentSeverity}
-Location: https://maps.google.com/?q=${lat},${lon}`;
-
-const numbers=data.contacts.join(",");
+const msg=
+`🚨 SentinelX Alert
+Name:${data.name}
+Building:${data.building}
+Floor:${data.floor}
+Room:${data.room}
+Severity:${severity}
+Location:https://maps.google.com/?q=${lat},${lon}`;
 
 window.location.href=
-`sms:${numbers}?body=${encodeURIComponent(message)}`;
+`sms:${data.contacts.join(",")}?body=${encodeURIComponent(msg)}`;
+}
 
-document.getElementById("severityDisplay").innerHTML=
-`<span class="badge ${currentSeverity.toLowerCase()}">
-${currentSeverity} SEVERITY
-</span>`;
+// ===== ADMIN LOG STORAGE =====
+function logEvent(level){
+
+let logs=JSON.parse(localStorage.getItem("sentinelLogs"))||[];
+
+logs.push({
+name:name.value,
+building:building.value,
+floor:floor.value,
+room:room.value,
+severity:level,
+time:new Date().toLocaleString()
+});
+
+localStorage.setItem("sentinelLogs",JSON.stringify(logs));
 }
 
 </script>
