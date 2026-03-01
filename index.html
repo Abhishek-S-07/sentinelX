@@ -3,247 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SentinelX Smart College Emergency</title>
+<title>SentinelX Student</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Firebase v8 CDN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body{
-margin:0;
-font-family:Segoe UI;
-background:linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#000);
-background-size:400% 400%;
-animation:gradient 10s ease infinite;
-color:white;
-}
-@keyframes gradient{
-0%{background-position:0% 50%}
-50%{background-position:100% 50%}
-100%{background-position:0% 50%}
-}
-.container{max-width:1000px;margin:auto;padding:20px;}
-.card{
-background:rgba(255,255,255,0.08);
-padding:20px;
-border-radius:15px;
-margin-bottom:20px;
-}
-input,select{
-width:100%;padding:10px;margin:8px 0;border:none;border-radius:8px;
-}
-button{
-padding:12px;border:none;border-radius:8px;
-margin:6px 0;background:crimson;color:white;font-weight:bold;cursor:pointer;
-}
+body{font-family:Arial;background:#0f2027;color:white;text-align:center;padding:20px;}
+input,select{padding:10px;margin:8px;width:80%;border-radius:8px;border:none;}
+button{padding:10px;background:crimson;color:white;border:none;border-radius:8px;cursor:pointer;}
 button:hover{background:#ff1744;}
-#map{height:60vh;border-radius:15px;margin-top:10px;}
-.badge{padding:8px 15px;border-radius:20px;font-weight:bold;}
-.low{background:green;}
-.medium{background:orange;}
-.high{background:red;}
 </style>
 </head>
-
 <body>
-<div class="container">
 
-<h2>🏫 SentinelX – Smart College Emergency</h2>
-
-<div class="card">
-
-<h3>Student Registration</h3>
+<h2>🏫 SentinelX Student App</h2>
 
 <input id="name" placeholder="Name">
-<select id="blood">
-<option value="">Blood Group</option>
-<option>A+</option><option>B+</option>
-<option>O+</option><option>AB+</option>
-</select>
-
 <select id="building">
-<option value="">Building</option>
 <option>Main Block</option>
 <option>Lab Block</option>
 <option>Library</option>
 </select>
-
 <select id="floor">
-<option value="">Floor</option>
 <option>Ground</option>
 <option>1st</option>
 <option>2nd</option>
 </select>
-
 <input id="room" placeholder="Room No">
-<input id="contact1" placeholder="Contact 1 (10 digits)" maxlength="10">
-<input id="contact2" placeholder="Contact 2 (10 digits)" maxlength="10">
+<input id="contact" placeholder="Emergency Contact (10 digits)" maxlength="10">
 
+<br>
 <button onclick="register()">Register</button>
 <button onclick="startTracking()">Start Live Tracking</button>
-<button onclick="enableMotion()">Enable Smart Detection</button>
-<button onclick="simulateImpact()">Simulate Impact (Demo)</button>
-
-<div id="countdown"></div>
-<div id="severityBox"></div>
-
-</div>
-
-<div class="card">
-<h3>📡 Live Campus Monitoring</h3>
-<div id="map"></div>
-</div>
-
-</div>
+<button onclick="triggerAlert()">Trigger Emergency</button>
 
 <script>
 
-let map, marker;
-let severity="LOW";
-let timer;
+// 🔥 YOUR FIREBASE CONFIG (Converted to v8)
+const firebaseConfig = {
+  apiKey: "AIzaSyBz80olPhD8ZUlaCSaXmojuseANyzuUOj8",
+  authDomain: "sentinelx-blaze.firebaseapp.com",
+  databaseURL: "https://sentinelx-blaze-default-rtdb.firebaseio.com",
+  projectId: "sentinelx-blaze",
+  storageBucket: "sentinelx-blaze.firebasestorage.app",
+  messagingSenderId: "601578359867",
+  appId: "1:601578359867:web:832a82427f67cb4468e01e",
+  measurementId: "G-ZQF87RGSJ7"
+};
 
-// ===== REGISTER =====
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentUserID = null;
+
+// REGISTER
 function register(){
 
 const phoneRegex=/^[0-9]{10}$/;
 
-const user={
-name:name.value,
-blood:blood.value,
-building:building.value,
-floor:floor.value,
-room:room.value,
-contacts:[contact1.value,contact2.value].filter(Boolean)
-};
-
-if(!phoneRegex.test(contact1.value)){
-alert("Contact must be 10 digits"); return;
+if(!phoneRegex.test(contact.value)){
+alert("Enter valid 10 digit number");
+return;
 }
 
-localStorage.setItem("sentinelUser",JSON.stringify(user));
-alert("Registered");
+currentUserID = Date.now();
+
+db.ref("users/" + currentUserID).set({
+name: name.value,
+building: building.value,
+floor: floor.value,
+room: room.value,
+contact: contact.value,
+status: "ACTIVE",
+live: "OFF"
+});
+
+alert("Registered Successfully");
 }
 
-// ===== GPS =====
+// LIVE TRACKING
 function startTracking(){
-navigator.geolocation.watchPosition(pos=>{
-const lat=pos.coords.latitude;
-const lon=pos.coords.longitude;
 
-if(!map){
-map=L.map('map').setView([lat,lon],16);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-marker=L.marker([lat,lon]).addTo(map);
-}else{
-marker.setLatLng([lat,lon]);
-map.setView([lat,lon]);
+if(!currentUserID){
+alert("Register first");
+return;
 }
+
+navigator.geolocation.watchPosition(position => {
+
+const lat = position.coords.latitude;
+const lon = position.coords.longitude;
+
+db.ref("users/" + currentUserID).update({
+latitude: lat,
+longitude: lon,
+live: "ON"
+});
+
 });
 }
 
-// ===== MOTION DETECTION =====
-function enableMotion(){
+// TRIGGER ALERT
+function triggerAlert(){
 
-if(typeof DeviceMotionEvent.requestPermission==="function"){
-DeviceMotionEvent.requestPermission().then(p=>{
-if(p==="granted"){
-window.addEventListener("devicemotion",motionHandler);
-}
-});
-}else{
-window.addEventListener("devicemotion",motionHandler);
-}
+if(!currentUserID){
+alert("Register first");
+return;
 }
 
-function motionHandler(e){
-
-const acc=e.accelerationIncludingGravity;
-if(!acc) return;
-
-const total=Math.abs(acc.x)+Math.abs(acc.y)+Math.abs(acc.z);
-
-if(total>45){ trigger("HIGH"); }
-else if(total>30){ trigger("MEDIUM"); }
-else if(total>20){ trigger("LOW"); }
-}
-
-// ===== DEMO BUTTON =====
-function simulateImpact(){
-trigger("HIGH");
-}
-
-// ===== TRIGGER FLOW =====
-function trigger(level){
-
-severity=level;
-
-logEvent(level);
-
-let sec=10;
-
-countdown.innerHTML=
-`Impact Detected (${level}) - Sending SOS in 10s
-<br><button onclick="cancel()">Cancel</button>`;
-
-timer=setInterval(()=>{
-sec--;
-countdown.innerHTML=
-`Sending in ${sec}s
-<br><button onclick="cancel()">Cancel</button>`;
-if(sec<=0){
-clearInterval(timer);
-sendSOS();
-}
-},1000);
-
-severityBox.innerHTML=
-`<span class="badge ${level.toLowerCase()}">${level} SEVERITY</span>`;
-}
-
-// ===== CANCEL =====
-function cancel(){
-clearInterval(timer);
-countdown.innerHTML="Emergency Cancelled";
-}
-
-// ===== SEND SMS =====
-function sendSOS(){
-
-const data=JSON.parse(localStorage.getItem("sentinelUser"));
-if(!data||!marker) return;
-
-const lat=marker.getLatLng().lat;
-const lon=marker.getLatLng().lng;
-
-const msg=
-`🚨 SentinelX Alert
-Name:${data.name}
-Building:${data.building}
-Floor:${data.floor}
-Room:${data.room}
-Severity:${severity}
-Location:https://maps.google.com/?q=${lat},${lon}`;
-
-window.location.href=
-`sms:${data.contacts.join(",")}?body=${encodeURIComponent(msg)}`;
-}
-
-// ===== ADMIN LOG STORAGE =====
-function logEvent(level){
-
-let logs=JSON.parse(localStorage.getItem("sentinelLogs"))||[];
-
-logs.push({
-name:name.value,
-building:building.value,
-floor:floor.value,
-room:room.value,
-severity:level,
-time:new Date().toLocaleString()
+db.ref("alerts/" + Date.now()).set({
+userID: currentUserID,
+severity: "HIGH",
+time: new Date().toLocaleString()
 });
 
-localStorage.setItem("sentinelLogs",JSON.stringify(logs));
+db.ref("users/" + currentUserID).update({
+status: "EMERGENCY"
+});
+
+alert("Emergency Sent to Admin");
 }
+
+window.onbeforeunload = function(){
+if(currentUserID){
+db.ref("users/" + currentUserID).update({
+live: "OFF"
+});
+}
+};
 
 </script>
 </body>
