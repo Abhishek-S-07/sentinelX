@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SentinelX Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{background:#111;color:white;font-family:Arial;padding:20px;}
+#map{height:500px;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid gray;padding:10px;text-align:center;}
+th{background:crimson;}
+</style>
+</head>
+<body>
+
+<h2>🏫 Live Campus Monitoring</h2>
+<div id="map"></div>
+
+<table>
+<tr>
+<th>Name</th>
+<th>Status</th>
+<th>Live</th>
+<th>Track</th>
+</tr>
+<tbody id="users"></tbody>
+</table>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBz80olPhD8ZUlaCSaXmojuseANyzuUOj8",
+  authDomain: "sentinelx-blaze.firebaseapp.com",
+  databaseURL: "https://sentinelx-blaze-default-rtdb.firebaseio.com",
+  projectId: "sentinelx-blaze",
+  storageBucket: "sentinelx-blaze.firebasestorage.app",
+  messagingSenderId: "601578359867",
+  appId: "1:601578359867:web:832a82427f67cb4468e01e",
+  measurementId: "G-ZQF87RGSJ7"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let map = L.map('map').setView([13.0827,80.2707],15);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+.addTo(map);
+
+let markers = {};
+
+db.ref("users").on("value", snapshot=>{
+
+let html="";
+
+snapshot.forEach(child=>{
+
+const u = child.val();
+const id = child.key;
+
+html += `
+<tr>
+<td>${u.name}</td>
+<td>${u.status || "ACTIVE"}</td>
+<td>${u.live || "OFF"}</td>
+<td><button onclick="focusUser('${id}')">Track</button></td>
+</tr>`;
+
+if(u.latitude && u.longitude){
+
+if(!markers[id]){
+markers[id] = L.marker([u.latitude,u.longitude]).addTo(map);
+}else{
+markers[id].setLatLng([u.latitude,u.longitude]);
+}
+
+}
+
+});
+
+document.getElementById("users").innerHTML = html;
+
+});
+
+function focusUser(id){
+
+db.ref("users/" + id).once("value", snap=>{
+const u = snap.val();
+if(u.latitude && u.longitude){
+map.setView([u.latitude,u.longitude],18);
+}
+});
+
+}
+
+</script>
+</body>
+</html>
