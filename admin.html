@@ -1,50 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>SentinelX Admin Dashboard</title>
+<title>Admin Login</title>
 <style>
-body{background:#111;color:white;font-family:Arial;padding:20px;}
-table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid gray;padding:10px;text-align:center;}
-th{background:crimson;}
+body{background:#111;color:white;text-align:center;padding:100px;font-family:Arial;}
+input{padding:10px;margin:10px;border-radius:8px;border:none;}
+button{padding:10px;background:crimson;color:white;border:none;border-radius:8px;}
 </style>
 </head>
 <body>
 
-<h2>🏫 SentinelX Campus Control Room</h2>
+<h2>🔐 SentinelX Admin Login</h2>
 
-<table>
-<tr>
-<th>Name</th>
-<th>Building</th>
-<th>Floor</th>
-<th>Room</th>
-<th>Severity</th>
-<th>Time</th>
-</tr>
-<tbody id="logs"></tbody>
-</table>
+<input type="password" id="pass" placeholder="Enter Password">
+<br>
+<button onclick="login()">Login</button>
 
 <script>
-
-const logs=JSON.parse(localStorage.getItem("sentinelLogs"))||[];
-
-let html="";
-
-logs.forEach(l=>{
-html+=`
-<tr>
-<td>${l.name}</td>
-<td>${l.building}</td>
-<td>${l.floor}</td>
-<td>${l.room}</td>
-<td>${l.severity}</td>
-<td>${l.time}</td>
-</tr>`;
-});
-
-document.getElementById("logs").innerHTML=html;
-
+function login(){
+if(pass.value==="admin123"){
+window.location.href="dashboard.html";
+}else{
+alert("Wrong Password");
+}
+}
 </script>
 
 </body>
